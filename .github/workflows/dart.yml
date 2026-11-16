@@ -1,11 +1,23 @@
-name: Build Flutter Web Release
+name: Build and Deploy Flutter Web
 
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
+
+# Sets permissions required to deploy to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  build-web:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,12 +32,22 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # Correct command for building a web app instead of Android
-      - name: Build Web Release
-        run: flutter build web --release
+      # Configure GitHub Pages base path so web assets load properly
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
 
-      - name: Upload Web Build Artifact
-        uses: actions/upload-artifact@v4
+      # Build web app with base-href matching your GitHub repository name
+      - name: Build Web Release
+        run: flutter build web --release --base-href "${{ steps.pages.outputs.base_path }}/"
+
+      # Prepare artifacts for GitHub Pages deployment
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: flutter-web-release
           path: build/web/
+
+      # Deploy the built release to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
