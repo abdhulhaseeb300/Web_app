@@ -1,0 +1,42 @@
+name: Build Flutter Android Release
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # Adds a manual "Run workflow" button in GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Download your repository code
+      - uses: actions/checkout@v4
+
+      # 2. Set up Java (Required for Android Gradle builds)
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. Set up the Flutter SDK
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      # 4. Install dependencies
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 5. Build the Android Release APK
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      # 6. Upload the APK so you can download it from GitHub
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: counter-app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
